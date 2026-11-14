@@ -15,6 +15,19 @@
 .stage.editable{cursor:grab;touch-action:none}.stage.dragging{cursor:grabbing}.stage.dragging .character{animation:none}
 .draw-modal{position:fixed;inset:0;background:rgba(54,54,64,.76);backdrop-filter:grayscale(1) blur(3px);z-index:100;display:grid;place-items:center;padding:20px}.draw-panel{background:#fffefa;border-radius:24px;box-shadow:0 23px 80px #2926336e;width:min(440px,100%);padding:25px;text-align:center;border:1px solid #eee7e8}.draw-label{font-size:12px;color:#8a7897;font-weight:800;letter-spacing:.08em}.draw-spot{margin:15px auto 11px;width:min(280px,80%);aspect-ratio:1;background:radial-gradient(circle,#fff8df 20%,#f5edd8 66%,#e6e2e4);border-radius:50%;display:grid;place-items:center;filter:drop-shadow(0 8px 8px #67545c16)}.draw-spot svg{width:94%;height:94%;overflow:hidden;pointer-events:none}.draw-panel h2{font-size:22px;margin:6px 0 3px}.draw-caption{font-size:12px;color:#887b8a;margin:0 0 19px}.draw-actions{display:flex;gap:10px;justify-content:center}.draw-actions .btn{width:auto;min-width:120px}.draw-actions .btn-primary{background:#8fcaba;color:#254e4b;box-shadow:none}
 @media(max-width:750px){.tabs{grid-template-columns:repeat(6,1fr)}.tab{font-size:10px;padding:8px 0}.tab span{font-size:15px}}
+/* インスタンス編集: 余白を含む正方形の作業領域 */
+.stage{border-radius:18px;overflow:visible;isolation:auto;background:radial-gradient(circle,#fffbdd,#fdf0dc)}
+.stage::before{border-radius:12px;inset:3%;border-width:1px}
+.stage canvas{display:block;position:relative;width:100%;height:100%;border-radius:18px;touch-action:none}
+.stage-plate{z-index:auto;margin-top:14px}.name-label{display:block;font-size:12px;margin:12px 0 6px}
+#character-name{max-width:100%;width:270px;border:1px solid #dcd0e3;border-radius:10px;padding:9px;color:var(--ink);background:#fff}
+.list-label{display:block;font-size:12px;font-weight:800;margin-bottom:6px}
+#instance-list{width:100%;border:1px solid #d5c8df;border-radius:10px;padding:5px;color:var(--ink);background:#fff;margin-bottom:15px;font:inherit;font-size:12px;min-height:150px}
+#instance-list option{padding:7px;border-radius:5px}#instance-list option:checked{background:#e4d6f5;color:#493063;font-weight:800}
+.part-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}.part-actions .btn{font-size:12px;padding:10px 6px;min-height:42px}
+.part-stock{display:block;font-size:10px;color:var(--muted);margin-top:5px}.toolbar .btn{min-height:44px}
+.position-controls{margin-top:0}.middle,.right{min-width:0}select:focus-visible{outline:3px solid #78c7b7;outline-offset:2px}
+@media(max-width:750px){.control-row{padding:8px 0}.control-row input{min-height:30px}.stage{max-width:480px}.right{grid-row:2}.left{grid-row:3}}
 </style>
 </head>
 <body>
@@ -28,10 +41,12 @@
 <div class="rule"></div><div class="gacha-head"><h3>アイテム抽選</h3><span class="price">100pt / 1回</span></div><button id="draw" class="btn btn-gacha">抽選する</button><div id="result" class="result blank" aria-live="polite">抽選したアイテムがここに表示されます</div>
 <p class="side-note">素体・パーツのいずれかを獲得できます。</p></section>
 <section class="panel center-card middle" aria-labelledby="monster-title"><div class="stage-title"><h2 id="monster-title">キャラクター</h2><span class="live">プレビュー</span></div>
-<div class="stage" id="stage" aria-label="現在のキャラクターのプレビュー"><span class="sparkle s1">✦</span><span class="sparkle s2">✳</span><span class="sparkle s3">✧</span><div class="character" id="character"><img class="layer" src="assets/tail_curl.svg" alt="" style="z-index:1" data-layer="tail"><img class="layer" src="assets/ears_round.svg" alt="" style="z-index:2" data-layer="ears"><img class="layer" src="assets/base.svg" alt="" style="z-index:3" data-layer="body"><img class="layer" src="assets/limbs_paws.svg" alt="" style="z-index:4" data-layer="limbs"><img class="layer" src="assets/eyes_cute.svg" alt="" style="z-index:5" data-layer="eyes"><img class="layer" src="assets/mouth_smile.svg" alt="" style="z-index:6" data-layer="mouth"></div></div>
-<div class="stage-plate"><div id="monster-name" class="monster-name">ぽよまる</div></div><p class="hint">部位を選択し、プレビュー上でドラッグすると位置を変更できます。</p><div class="toolbar"><button type="button" id="reset-outfit" class="btn btn-outline">初期状態に戻す</button></div></section>
-<section class="panel right" aria-labelledby="editor-title"><div class="panel-title"><h2 id="editor-title">パーツエディター</h2><span class="step">02</span></div><p class="editor-desc">部位とアイテムを選び、装着します。</p><nav class="tabs" id="category-tabs" aria-label="編集する部位"></nav>
-<div class="position-controls" id="position-controls"><p class="control-hint">選択した部位の位置は、キャラクターをドラッグして変更できます。</p><div class="control-row"><label for="part-scale">大きさ</label><input id="part-scale" type="range" min="45" max="250" value="100"><output id="part-scale-value">100%</output></div><div class="control-row"><label for="part-rotate">回転</label><input id="part-rotate" type="range" min="-180" max="180" value="0"><output id="part-rotate-value">0°</output></div><button type="button" id="reset-position" class="smallbtn">この部位の位置をリセット</button></div>
+<div class="stage" id="stage"><canvas id="character" width="1200" height="1200" role="img" aria-label="現在のキャラクター。配置したパーツの一覧から選んで編集できます。"></canvas></div>
+<div class="stage-plate"><div id="monster-name" class="monster-name">ぽよまる</div><label class="name-label" for="character-name">作品の名前</label><input id="character-name" maxlength="40" placeholder="ぽよまる" autocomplete="off"></div><p class="hint">一覧かパーツを選び、プレビューでドラッグして移動。<br>全体が入るように表示の倍率を自動調整します。</p><div class="toolbar"><button type="button" id="save-image" class="btn btn-primary">作品を保存</button><button type="button" id="open-board" class="btn btn-outline">みんなの作品を見る・投稿する</button><button type="button" id="reset-outfit" class="btn btn-outline">初期状態に戻す</button></div><p id="board-hint" class="side-note"></p></section>
+<section class="panel right" aria-labelledby="editor-title"><div class="panel-title"><h2 id="editor-title">パーツエディター</h2><span class="step">02</span></div><p class="editor-desc">配置したパーツを選んで編集できます。アイテムを押すと追加します。</p>
+<label class="list-label" for="instance-list">配置したパーツ（上ほど前面）</label><select id="instance-list" size="6" aria-label="配置したパーツ"></select>
+<div class="position-controls" id="position-controls"><p id="selected-part" class="control-hint"></p><div class="control-row"><label for="part-x">横位置</label><input id="part-x" type="range" min="-400" max="400" value="0"><output id="part-x-value">0</output></div><div class="control-row"><label for="part-y">縦位置</label><input id="part-y" type="range" min="-400" max="400" value="0"><output id="part-y-value">0</output></div><div class="control-row"><label for="part-scale">大きさ</label><input id="part-scale" type="range" min="20" max="300" value="100"><output id="part-scale-value">100%</output></div><div class="control-row"><label for="part-rotate">回転</label><input id="part-rotate" type="range" min="-180" max="180" value="0"><output id="part-rotate-value">0°</output></div><div class="part-actions"><button type="button" id="duplicate-part" class="btn btn-outline">複製</button><button type="button" id="delete-part" class="btn btn-outline">削除</button><button type="button" id="bring-front" class="btn btn-outline">最前面へ</button><button type="button" id="send-back" class="btn btn-outline">最背面へ</button></div><button type="button" id="reset-position" class="smallbtn">このパーツの位置・大きさ・回転をリセット</button></div>
+<nav class="tabs" id="category-tabs" aria-label="追加する部位"></nav>
 <div class="collection" id="collection" aria-live="polite"></div><p id="inventory-hint" class="gacha-mini"></p><div class="editor-actions"><button id="unlock-all" class="smallbtn" type="button">開発用：全アイテムを解放</button><button id="wipe" class="smallbtn" type="button">データを初期化</button></div></section>
 </div>
 </main>
@@ -44,5 +59,6 @@
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="app.js" defer></script>
+<script src="editor.js" defer></script>
 </body>
 </html>
